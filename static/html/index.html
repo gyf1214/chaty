@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title></title>
+        <link rel="stylesheet" href="/static/css/main.css" />
+    </head>
+    <body>
+        <div class="dialogue hidden" id="dialogue">
+            <div class="dialogue-box">
+                <div class="dialogue-row">
+                    <p class="dialogue-label">Token</p>
+                    <input class="dialogue-input" id="dialogue-user" />
+                </div>
+                <div class="dialogue-row">
+                    <p class="dialogue-label">Private</p>
+                    <input class="dialogue-input" id="dialogue-priv" />
+                </div>
+                <div class="dialogue-row">
+                    <p class="dialogue-label">Public</p>
+                    <input class="dialogue-input" disabled="disabled" id="dialogue-pub" value="N/A" />
+                </div>
+                <div class="dialogue-row">
+                    <p class="dialogue-label">Users</p>
+                    <input class="dialogue-input" id="dialogue-users" />
+                </div>
+                <div class="dialogue-row">
+                    <p class="dialogue-label">Channels</p>
+                    <input class="dialogue-input" id="dialogue-channels" />
+                </div>
+                <a class="dialogue-btn btn" id="dialogue-save" href="#">Save</a>
+                <a class="dialogue-btn btn" id="dialogue-cancel" href="#">Cancel</a>
+                <a class="dialogue-btn btn" id="dialogue-gen" href="#">Generate</a>
+                <a class="dialogue-btn btn" id="dialogue-clear" href="#">Clear</a>
+            </div>
+        </div>
+        <main class="container card" id="main">
+            <div class="sidebar">
+                <a class="sidebar-head" id="sidebar-head" href="#"></a>
+                <div class="sidebar-list" id="sidebar-list"></div>
+            </div>
+            <div class="footbar col">
+                <div class="footbar-container">
+                    <textarea class="footbar-input scroll" id="footbar-input" wrap="virtual" contenteditable="true" placeholder="Enter..."></textarea>
+                    <div class="footbar-tool">
+                        <a class="footbar-btn btn" id="footbar-btn" href="#">Send</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <script src="/static/js/jquery-3.2.1.min.js" charset="utf-8"></script>
+        <script src="/static/js/base64js.min.js" charset="utf-8"></script>
+        <script src="/static/js/sha256.min.js" charset="utf-8"></script>
+        <script src="/static/js/elliptic.min.js" charset="utf-8"></script>
+        <script src="/static/js/sjcl.js" charset="utf-8"></script>
+        <script src="/static/js/main.js" charset="utf-8"></script>
+    </body>
+</html>
