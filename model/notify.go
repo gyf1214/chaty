@@ -8,7 +8,6 @@ import (
 
 type Notifier interface {
 	Acquire()
-	Release()
 	Wait() bool
 	Notify(bool)
 }
@@ -36,20 +35,16 @@ func (n *notifier) Acquire() {
 	n.wait = true
 }
 
-func (n *notifier) Release() {
-	n.Lock()
-	defer n.Unlock()
-	n.wait = false
-}
-
 func (n *notifier) Wait() bool {
-	defer n.Release()
 	select {
 	case data := <-n.notify:
 		return data
 	case <-time.After(time.Duration(*timeout) * time.Millisecond):
+		n.Lock()
+		defer n.Unlock()
+		n.wait = false
+		return true
 	}
-	return true
 }
 
 func (n *notifier) Notify(tf bool) {
@@ -58,4 +53,5 @@ func (n *notifier) Notify(tf bool) {
 	if n.wait {
 		n.notify <- tf
 	}
+	n.wait = false
 }

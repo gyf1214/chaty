@@ -57,11 +57,12 @@ func send(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", 400)
 		return
 	}
-	if msg.User != session.User().Token() {
+	sender := session.User()
+	if msg.User != sender.Token() {
 		http.Error(w, "", 400)
 	}
 
-	users := model.FindChannel(msg.Channel)
+	users := model.FindChannel(sender, msg.Channel)
 	if users == nil {
 		http.Error(w, "", 400)
 		return

@@ -54,7 +54,7 @@ func DumpChannels() (string, error) {
 }
 
 func SaveChannels() error {
-	file, err := os.Open(*channelPath)
+	file, err := os.Create(*channelPath)
 	if err != nil {
 		return err
 	}
@@ -68,21 +68,31 @@ func FindUser(token string) User {
 	return c.users[token]
 }
 
-func FindChannel(token string) []User {
+func FindChannel(sender User, token string) []User {
 	c.RLock()
 	defer c.RUnlock()
 
 	users := c.channels[token]
 	if users == nil {
 		if user := c.users[token]; user != nil {
-			return []User{user}
+			if user.Token() == sender.Token() {
+				return []User{sender}
+			}
+			return []User{sender, user}
 		}
 		return nil
 	}
 
 	ret := []User{}
+	found := false
 	for k := range users {
 		ret = append(ret, k)
+		if sender.Token() == k.Token() {
+			found = true
+		}
+	}
+	if !found {
+		return nil
 	}
 
 	return ret

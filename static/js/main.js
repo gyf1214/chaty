@@ -112,6 +112,11 @@ function startnav() {
         $navs[x] = newnav(x, ch);
         $tabs[x] = newtab(x, ch);
     }
+    for (var x in users) {
+        var ch = users[x];
+        $navs[x] = newnav(x, ch);
+        $tabs[x] = newtab(x, ch);
+    }
 }
 
 function appendMsg(channel, sender, msg) {

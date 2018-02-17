@@ -11,12 +11,15 @@ import (
 	"os"
 
 	"github.com/gyf1214/chaty/controller"
+	"github.com/gyf1214/chaty/model"
 	"github.com/gyf1214/chaty/util"
 )
 
 var (
-	base = flag.String("base", "http://127.0.0.1:12450", "base url")
-	conf = flag.String("conf", "conf/local-user.json", "user config")
+	base  = flag.String("base", "http://127.0.0.1:12450", "base url")
+	conf  = flag.String("conf", "conf/local-user.json", "user config")
+	token string
+	key   []byte
 )
 
 type UserConf struct {
@@ -24,13 +27,18 @@ type UserConf struct {
 	Token string `json:"t"`
 }
 
-func post(url string, data interface{}) (*http.Response, error) {
+func post(url string, data interface{}) *http.Response {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(data)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return http.Post(*base+url, "application/json", &buf)
+	resp, err := http.Post(*base+url, "application/json", &buf)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(url, resp.StatusCode)
+	return resp
 }
 
 func loadConf() UserConf {
@@ -49,13 +57,9 @@ func loadConf() UserConf {
 }
 
 func enter(token string, privKey string) (string, []byte) {
-	resp, err := post("/enter", controller.EnterRequest{Token: token})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("enter:", resp.StatusCode)
+	resp := post("/enter", controller.EnterRequest{Token: token})
 	var response controller.EnterResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
+	err := json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		panic(err)
 	}
@@ -80,14 +84,10 @@ func enter(token string, privKey string) (string, []byte) {
 	return response.Token, key[:]
 }
 
-func show(token string, key []byte) {
-	resp, err := post("/admin/show", controller.AdminShowRequest{Token: token})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("show:", resp.StatusCode)
-	var response controller.AdminShowResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
+func show() {
+	resp := post("/admin/show", controller.AdminShowRequest{Token: token})
+	var response model.Encrypted
+	err := json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		panic(err)
 	}
@@ -98,22 +98,52 @@ func show(token string, key []byte) {
 	fmt.Println("current conf:", string(msg))
 }
 
-func loop(token string, key []byte) {
+func encodeRequest(v interface{}) controller.AdminRequest {
+	raw, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	data, iv, err := util.Encrypt(key, raw)
+	if err != nil {
+		panic(err)
+	}
+	encrypted := model.Encrypted{Data: data, IV: iv}
+	return controller.AdminRequest{Token: token, Msg: encrypted}
+}
+
+func addUser(token string, pub string) {
+	msg := controller.AddUserRequest{Token: token, Pubkey: pub}
+	post("/admin/addUser", encodeRequest(&msg))
+}
+
+func delUser(token string) {
+	msg := controller.DelUserRequest{Token: token}
+	post("/admin/delUser", encodeRequest(&msg))
+}
+
+func loop() {
 	for {
 		fmt.Print("> ")
 		var cmd string
 		fmt.Scan(&cmd)
+		var arg1, arg2 string
 		switch cmd {
 		case "end":
 			return
 		case "show":
-			show(token, key)
+			show()
+		case "addUser":
+			fmt.Scan(&arg1, &arg2)
+			addUser(arg1, arg2)
+		case "delUser":
+			fmt.Scan(&arg1)
+			delUser(arg1)
 		}
 	}
 }
 
 func main() {
 	conf := loadConf()
-	token, key := enter(conf.Token, conf.Priv)
-	loop(token, key)
+	token, key = enter(conf.Token, conf.Priv)
+	loop()
 }
