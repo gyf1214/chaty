@@ -6,9 +6,6 @@ var user = '6Ik+FbfTq+SgPisFIVH7fN3TDzzvtraHL8Oqc357ZEM=';
 var users = {
     '6Ik+FbfTq+SgPisFIVH7fN3TDzzvtraHL8Oqc357ZEM=': '小小童鞋'
 };
-var channels = {
-    '4HrR+OvPyjKwOjsqeUY+TEGRUaNUT3ZkFK5mLTwyyPs=': '测试'
-};
 var curve = new elliptic.ec('p256');
 var curTab;
 var $navs = {};
@@ -51,6 +48,8 @@ function enter(user, cb) {
         var key = base64js.fromByteArray(m.encode());
         key = base64js.fromByteArray(sha256.array(key));
         if (typeof cb === 'function') cb(data.t, key);
+    }, function () {
+        loadDialogue();
     });
 }
 
@@ -107,11 +106,6 @@ function startnav() {
     $('#sidebar-list').empty();
     $('.main').remove();
     $('#sidebar-head').text(users[user] ? users[user] : 'Login');
-    for (var x in channels) {
-        var ch = channels[x];
-        $navs[x] = newnav(x, ch);
-        $tabs[x] = newtab(x, ch);
-    }
     for (var x in users) {
         var ch = users[x];
         $navs[x] = newnav(x, ch);
@@ -179,7 +173,6 @@ function start() {
     user = data.user;
     priv = data.priv;
     users = data.users;
-    channels = data.channels;
 
     startnav();
     startenter();
@@ -202,7 +195,6 @@ function clearDialogue() {
     $('#dialogue-priv').val('');
     $('#dialogue-user').val('');
     $('#dialogue-users').val('{}');
-    $('#dialogue-channels').val('{}');
     updatePub();
 }
 
@@ -212,7 +204,6 @@ function loadDialogue() {
         $('#dialogue-priv').val(data.priv);
         $('#dialogue-user').val(data.user);
         $('#dialogue-users').val(JSON.stringify(data.users));
-        $('#dialogue-channels').val(JSON.stringify(data.channels));
         updatePub();
     } else {
         clearDialogue();
@@ -224,11 +215,9 @@ function saveDialogue() {
     var data = {
         priv:     $('#dialogue-priv').val(),
         user:     $('#dialogue-user').val(),
-        users:    JSON.parse($('#dialogue-users').val()),
-        channels: JSON.parse($('#dialogue-channels').val())
+        users:    JSON.parse($('#dialogue-users').val())
     }
     localStorage.chaty = JSON.stringify(data);
-    console.log(data);
     $('#dialogue').hide();
 
     start();
