@@ -143,6 +143,7 @@ func loop() {
 }
 
 func main() {
+	flag.Parse()
 	conf := loadConf()
 	token, key = enter(conf.Token, conf.Priv)
 	loop()

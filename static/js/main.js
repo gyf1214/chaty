@@ -120,11 +120,20 @@ function startnav() {
 }
 
 function appendMsg(channel, sender, msg) {
-    var $con = $tabs[channel].con;
+    var $con;
+    if (channel === user) {
+        $con = $tabs[sender].con;
+    } else {
+        $con = $tabs[channel].con;
+    }
+    var display = users[sender];
+    if (typeof display === 'undefined') {
+        display = '*';
+    }
     if (typeof $con !== 'undefined') {
         var $msg = $('<div></div>').addClass('message').appendTo($con);
         var $sender = $('<p></p>').addClass('message-sender')
-                 .text(sender).appendTo($msg);
+                 .text(display).appendTo($msg);
         var $data = $('<pre></pre>').addClass('message-data')
                .text(msg).appendTo($msg);
     }
@@ -144,12 +153,9 @@ function poll(t, k) {
         post('/poll', { t: t }, function (data) {
             for (var i = 0; i < data.length; i++) {
                 var msg = decrypt(k, data[i]);
-                var sender = users[msg.u];
+                var sender = msg.u;
                 var channel = msg.c;
                 var txt = msg.m;
-                if (typeof sender === 'undefined') {
-                    sender = '*';
-                }
                 appendMsg(channel, sender, txt);
             }
             poll(t, k);

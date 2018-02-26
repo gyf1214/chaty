@@ -1,9 +1,10 @@
 #!/bin/bash
 
-rm -fr deploy/*
+rm -fr deploy
+mkdir deploy
 docker-build-go -path=. -cmd=cmd/server
 chmod +x server
-tar zcvf deploy/server.tar.gz conf/ server
+tar zcvf deploy/server.tar.gz conf/server.json server
 tar zcvf deploy/static.tar.gz static/
 rm server
 

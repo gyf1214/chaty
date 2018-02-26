@@ -2,8 +2,9 @@ package model
 
 import (
 	"flag"
-	"sync"
 	"time"
+
+	"github.com/gyf1214/chaty/util"
 )
 
 type Notifier interface {
@@ -13,9 +14,8 @@ type Notifier interface {
 }
 
 type notifier struct {
-	wait   bool
 	notify chan bool
-	sync.Mutex
+	util.SpinMutex
 }
 
 var timeout = flag.Int("timeout", 5000, "poll timeout")
@@ -27,31 +27,26 @@ func NewNotifier() Notifier {
 }
 
 func (n *notifier) Acquire() {
-	n.Lock()
-	defer n.Unlock()
-	if n.wait {
+	if !n.TryLock() {
 		n.notify <- false
+		n.Lock()
 	}
-	n.wait = true
 }
 
 func (n *notifier) Wait() bool {
+	defer n.Unlock()
 	select {
 	case data := <-n.notify:
 		return data
 	case <-time.After(time.Duration(*timeout) * time.Millisecond):
-		n.Lock()
-		defer n.Unlock()
-		n.wait = false
-		return true
 	}
+	return true
 }
 
 func (n *notifier) Notify(tf bool) {
-	n.Lock()
-	defer n.Unlock()
-	if n.wait {
+	if !n.TryLock() {
 		n.notify <- tf
+	} else {
+		n.Unlock()
 	}
-	n.wait = false
 }
