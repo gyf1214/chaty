@@ -79,11 +79,16 @@ function newtab(id, name) {
                .attr('id', 'main-' + id).hide().appendTo('#main');
     var $head = $('<div></div>').addClass('main-head').addClass('col')
                .appendTo($main);
-    var $title = $('<p></p>').addClass('main-title').text(name)
-                .appendTo($head);
+    var $title = $('<a></a>').attr('href', '#')
+                .addClass('main-title').text(name).appendTo($head);
     var $con = $('<div></div>').addClass('main-container')
               .addClass('col').addClass('scroll').appendTo($main);
-    return { main: $main, con: $con };
+    $title.click(function () {
+        $('#dialogue-token').val(id);
+        $('#dialogue-name').val($title.text());
+        $('#dialogue-tab').show();
+    });
+    return { m: $main, c: $con, t: $title };
 }
 
 function newnav(id, name) {
@@ -93,11 +98,11 @@ function newnav(id, name) {
     $nav.click(function () {
         if (typeof curTab !== 'undefined') {
             $navs[curTab].removeClass('active');
-            $tabs[curTab].main.hide();
+            $tabs[curTab].m.hide();
         }
         curTab = id;
         $navs[curTab].addClass('active');
-        $tabs[curTab].main.show();
+        $tabs[curTab].m.show();
     });
     return $nav;
 }
@@ -105,7 +110,15 @@ function newnav(id, name) {
 function startnav() {
     $('#sidebar-list').empty();
     $('.main').remove();
-    $('#sidebar-head').text(users[user] ? users[user] : 'Login');
+    $('#sidebar-head').text(users[user] ? users[user] : '*');
+    var $add = $('<a></a>').attr('href', '#').addClass('sidebar-link')
+              .attr('id', 'sidebar-new').text('+')
+              .appendTo($('#sidebar-list'));
+    $add.click(function () {
+        $('#dialogue-token-new').val('');
+        $('#dialogue-name-new').val('');
+        $('#dialogue-new').show();
+    });
     for (var x in users) {
         var ch = users[x];
         $navs[x] = newnav(x, ch);
@@ -116,9 +129,9 @@ function startnav() {
 function appendMsg(channel, sender, msg) {
     var $con;
     if (channel === user) {
-        $con = $tabs[sender].con;
+        $con = $tabs[sender].c;
     } else {
-        $con = $tabs[channel].con;
+        $con = $tabs[channel].c;
     }
     var display = users[sender];
     if (typeof display === 'undefined') {
@@ -211,22 +224,14 @@ function loadDialogue() {
     $('#dialogue').show();
 }
 
-function saveDialogue() {
-    var data = {
-        priv:     $('#dialogue-priv').val(),
-        user:     $('#dialogue-user').val(),
-        users:    JSON.parse($('#dialogue-users').val())
-    }
+function saveUsers() {
+    var data = JSON.parse(localStorage.chaty);
+    data.users = users;
     localStorage.chaty = JSON.stringify(data);
-    $('#dialogue').hide();
-
-    start();
 }
 
 $(document).ready(function () {
-    $('#sidebar-head').click(function() {
-        loadDialogue();
-    });
+    $('#sidebar-head').click(loadDialogue);
 
     $('#dialogue-gen').click(function () {
         var user = sjcl.random.randomWords(8);
@@ -243,21 +248,73 @@ $(document).ready(function () {
         $('#dialogue').hide();
     });
 
-    $('#dialogue-clear').click(function () {
-        clearDialogue();
-        // saveDialogue();
-    });
-
     $('#dialogue-save').click(function () {
-        saveDialogue();
+        var data = {
+            priv:     $('#dialogue-priv').val(),
+            user:     $('#dialogue-user').val(),
+            users:    JSON.parse($('#dialogue-users').val())
+        }
+        localStorage.chaty = JSON.stringify(data);
+        $('#dialogue').hide();
+
+        start();
     });
 
-    $('#dialogue-priv').blur(function () {
-        updatePub();
-    })
+    $('#dialogue-clear').click(clearDialogue);
+    $('#dialogue-priv').blur(updatePub);
+    $('#footbar-btn').click(sendClick);
 
-    $('#footbar-btn').click(function () {
-        sendClick();
+    $('#dialogue-cancel-tab').click(function () {
+        $('#dialogue-tab').hide();
+    });
+
+    $('#dialogue-save-tab').click(function () {
+        var name = $('#dialogue-name').val();
+        if (typeof curTab !== 'undefined') {
+            users[curTab] = name;
+            $tabs[curTab].t.text(name);
+            $navs[curTab].text(name);
+            if (user === curTab) {
+                $('#sidebar-head').text(name);
+            }
+            saveUsers();
+        }
+        $('#dialogue-tab').hide();
+    });
+
+    $('#dialogue-del').click(function () {
+        if (typeof curTab !== 'undefined') {
+            delete users[curTab];
+            $navs[curTab].remove();
+            delete $navs[curTab];
+            $tabs[curTab].m.remove();
+            delete $tabs[curTab];
+            if (user === curTab) {
+                $('#sidebar-head').text('*');
+            }
+            curTab = undefined;
+            saveUsers();
+        }
+        $('#dialogue-tab').hide();
+    });
+
+    $('#dialogue-cancel-new').click(function () {
+        $('#dialogue-new').hide();
+    });
+
+    $('#dialogue-save-new').click(function () {
+        var id = $('#dialogue-token-new').val();
+        var name = $('#dialogue-name-new').val();
+        if (typeof users[id] === 'undefined') {
+            users[id] = name;
+            $navs[id] = newnav(id, name);
+            $tabs[id] = newtab(id, name);
+            if (user === id) {
+                $('#sidebar-head').text(name);
+            }
+            saveUsers();
+        }
+        $('#dialogue-new').hide();
     });
 
     $('#footbar-input').keydown(function (e) {
