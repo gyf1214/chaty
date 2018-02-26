@@ -27,5 +27,5 @@ EOF
 if [ -n "$remote" ]; then
     scp $deploy/$server $remote:$path
     echo $cmd
-    ssh -t $remote bash -c \"$cmd\"
+    ssh $remote bash -c \"$cmd\"
 fi

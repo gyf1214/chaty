@@ -9,7 +9,7 @@ start() {
         echo 'already running'
     else
         echo 'start server...'
-        nohup $binfile >> $lockfile 2>&1 < /dev/null &
+        $binfile >> $logfile 2>&1 < /dev/null & disown
         echo $! > $lockfile
         echo 'finished'
     fi
