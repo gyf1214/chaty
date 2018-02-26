@@ -136,6 +136,7 @@ function appendMsg(channel, sender, msg) {
                  .text(display).appendTo($msg);
         var $data = $('<pre></pre>').addClass('message-data')
                .text(msg).appendTo($msg);
+        $con.scrollTop($con.prop('scrollHeight'));
     }
 }
 
@@ -170,7 +171,6 @@ function poll(t, k) {
 function send(token, key, txt) {
     var msg = { u: user, c: curTab, m: txt };
     var data = encrypt(key, msg);
-    console.log(data);
     post('/send', { t: token, m: data });
 }
 
