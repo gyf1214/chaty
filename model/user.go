@@ -1,8 +1,6 @@
 package model
 
 import (
-	"sync"
-
 	"github.com/gyf1214/chaty/util"
 )
 
@@ -21,7 +19,7 @@ type user struct {
 	session  Session
 	queue    List
 	notifier Notifier
-	sync.Mutex
+	// sync.Mutex
 }
 
 func NewUser(token string, key string) (User, error) {
@@ -40,7 +38,7 @@ func NewUser(token string, key string) (User, error) {
 
 func (u *user) Send(data Data) {
 	u.queue.Push(data)
-	u.notifier.Notify(true)
+	u.notifier.Notify()
 }
 
 func (u *user) Poll() []Encrypted {
@@ -49,8 +47,7 @@ func (u *user) Poll() []Encrypted {
 	}
 
 	u.notifier.Acquire()
-	u.Lock()
-	defer u.Unlock()
+	defer u.notifier.Unlock()
 
 	if u.queue.Empty() {
 		if !u.notifier.Wait() {
@@ -80,9 +77,8 @@ func (u *user) PubKey() util.Point {
 }
 
 func (u *user) Enter() (Session, error) {
-	u.notifier.Notify(false)
-	u.Lock()
-	defer u.Unlock()
+	u.notifier.Acquire()
+	defer u.notifier.Unlock()
 
 	if u.session != nil {
 		u.session.Shutdown()
@@ -103,8 +99,7 @@ func (u *user) Enter() (Session, error) {
 }
 
 func (u *user) Leave() {
-	u.notifier.Notify(false)
-	u.Lock()
-	defer u.Unlock()
+	u.notifier.Acquire()
+	defer u.notifier.Unlock()
 	u.session = nil
 }

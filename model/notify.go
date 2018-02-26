@@ -10,7 +10,8 @@ import (
 type Notifier interface {
 	Acquire()
 	Wait() bool
-	Notify(bool)
+	Notify()
+	Unlock()
 }
 
 type notifier struct {
@@ -34,7 +35,6 @@ func (n *notifier) Acquire() {
 }
 
 func (n *notifier) Wait() bool {
-	defer n.Unlock()
 	select {
 	case data := <-n.notify:
 		return data
@@ -43,9 +43,9 @@ func (n *notifier) Wait() bool {
 	return true
 }
 
-func (n *notifier) Notify(tf bool) {
+func (n *notifier) Notify() {
 	if !n.TryLock() {
-		n.notify <- tf
+		n.notify <- true
 	} else {
 		n.Unlock()
 	}
